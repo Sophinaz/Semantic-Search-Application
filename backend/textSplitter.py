@@ -5,9 +5,9 @@ class TextSplitter:
         pass
     
     def split_text(self, docs):
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, add_start_index=True)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=230, chunk_overlap=30, add_start_index=True)
         all_splits = text_splitter.split_documents(docs)
         texts_only = [page.page_content for page in all_splits]
         pages_only = [page.metadata["page"] for page in all_splits]
 
-        return all_splits, pages_only
+        return texts_only, pages_only
