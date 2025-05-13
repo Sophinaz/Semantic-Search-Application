@@ -12,21 +12,25 @@ class UploadFile(Resource):
         self.embedder = embedder
         
     def post(self):
-        docs = self.fileProcessor.extract("2502.18639v1.pdf")
+        file = request.files['file']
+        file_path = f"./uploads/{file.filename}"
+        file.save(file_path)
+        docs = self.fileProcessor.extract(file_path)
+
         splits, pages = self.splitter.split_text(docs)
         embeddings = self.embedder.embed(splits, pages)
 
 
-        with open('embeddings.pkl', 'rb') as f:
+        with open('data/embeddings.pkl', 'rb') as f:
             data = pickle.load(f)
-        with open("embeddings.pkl", "wb") as f:
+        with open("data/embeddings.pkl", "wb") as f:
             data = np.concatenate((data, embeddings), axis=0)
             pickle.dump(data, f)
 
-        with open('chunks.pkl', 'rb') as f:
+        with open('data/chunks.pkl', 'rb') as f:
             data = pickle.load(f)
-        with open("chunks.pkl", "wb") as f:
-            data.extend(splits)
+        with open("data/chunks.pkl", "wb") as f:
+            data.extend([[splits[i], pages[i]] for i in range(len(splits))])
             pickle.dump(data, f)
 
         return None, 200
@@ -38,10 +42,11 @@ class Search(Resource):
     def post(self):
         query = request.json.get("query")
 
-        with open("embeddings.pkl", "rb") as f:
+        with open("data/embeddings.pkl", "rb") as f:
             embeddings = pickle.load(f)
-        with open("chunks.pkl", "rb") as f:
+        with open("data/chunks.pkl", "rb") as f:
             splits = pickle.load(f)
         
+        print("s", splits, type(splits), embeddings, type(embeddings))
         results = self.embedder.similarity(query, embeddings)
-        return [splits[i] for i in results], 200
+        return [[splits[i][0], splits[i][1]] for i in results], 200

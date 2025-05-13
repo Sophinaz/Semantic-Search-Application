@@ -16,10 +16,10 @@ def run():
     splitter = TextSplitter()
     embedder = Embedding("sentence-transformers/all-mpnet-base-v2")
     
-    with open("embeddings.pkl", "wb") as f:
+    with open("data/embeddings.pkl", "wb") as f:
         data = np.empty((0, 768), dtype=np.float32)
         pickle.dump(data, f)
-    with open("chunks.pkl", "wb") as f:
+    with open("data/chunks.pkl", "wb") as f:
         data = []
         pickle.dump(data, f)
 
