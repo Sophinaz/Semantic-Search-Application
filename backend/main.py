@@ -4,6 +4,8 @@ from api import UploadFile, Search
 from file_processor import ProcessFile
 from textSplitter import TextSplitter
 from embedding import Embedding
+import numpy as np
+import pickle
 
 
 def run():
@@ -13,6 +15,13 @@ def run():
     fileProcessor = ProcessFile()
     splitter = TextSplitter()
     embedder = Embedding("sentence-transformers/all-mpnet-base-v2")
+    
+    with open("embeddings.pkl", "wb") as f:
+        data = np.empty((0, 768), dtype=np.float32)
+        pickle.dump(data, f)
+    with open("chunks.pkl", "wb") as f:
+        data = []
+        pickle.dump(data, f)
 
     api.add_resource(UploadFile, "/upload", resource_class_kwargs={"fileProcessor": fileProcessor, "splitter": splitter, "embedder": embedder})
     api.add_resource(Search, "/search", resource_class_kwargs={"embedder": embedder})

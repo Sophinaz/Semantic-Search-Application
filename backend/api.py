@@ -1,36 +1,47 @@
 from flask import request
+from flask_restful import Resource
+import numpy as np
+import pickle
+
 
     
-class UploadFile:
+class UploadFile(Resource):
     def __init__(self, fileProcessor, splitter, embedder):
         self.fileProcessor = fileProcessor
         self.splitter = splitter
         self.embedder = embedder
         
     def post(self):
-        query = request.json.get("query")
-        
         docs = self.fileProcessor.extract("2502.18639v1.pdf")
         splits, pages = self.splitter.split_text(docs)
         embeddings = self.embedder.embed(splits, pages)
-        
-        self.embedder.embeddings.extend(embeddings)
-        self.embedder.chunks.extend(splits)
-        
-        query = "what are DNA’s nitrogenous bases?"
-        
-        results = self.embedder.similarity(query, embeddings)
-        print("results", [splits[i] for i in results])
+
+
+        with open('embeddings.pkl', 'rb') as f:
+            data = pickle.load(f)
+        with open("embeddings.pkl", "wb") as f:
+            data = np.concatenate((data, embeddings), axis=0)
+            pickle.dump(data, f)
+
+        with open('chunks.pkl', 'rb') as f:
+            data = pickle.load(f)
+        with open("chunks.pkl", "wb") as f:
+            data.extend(splits)
+            pickle.dump(data, f)
+
         return None, 200
     
-class Search:
+class Search(Resource):
     def __init__(self, embedder):
         self.embedder = embedder
     
     def post(self):
         query = request.json.get("query")
-        print("query", query)
+
+        with open("embeddings.pkl", "rb") as f:
+            embeddings = pickle.load(f)
+        with open("chunks.pkl", "rb") as f:
+            splits = pickle.load(f)
         
-        results = self.embedder.similarity(query, self.embedder.embeddings)
-        print("results", [self.embedder.splits[i] for i in results])
-        return None, 200
+        results = self.embedder.similarity(query, embeddings)
+        return [splits[i] for i in results], 200
