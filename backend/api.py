@@ -15,10 +15,14 @@ class UploadFile(Resource):
         file = request.files['file']
         file_path = f"./uploads/{file.filename}"
         file.save(file_path)
-        docs = self.fileProcessor.extract(file_path)
+        try:
+            docs = self.fileProcessor.extract(file_path)
 
-        splits, pages = self.splitter.split_text(docs)
-        embeddings = self.embedder.embed(splits, pages)
+            splits, pages = self.splitter.split_text(docs)
+            embeddings = self.embedder.embed(splits, pages)
+        except Exception as e:
+            return {"error": str(e)}, 400
+        
 
 
         with open('data/embeddings.pkl', 'rb') as f:
@@ -33,7 +37,7 @@ class UploadFile(Resource):
             data.extend([[splits[i], pages[i]] for i in range(len(splits))])
             pickle.dump(data, f)
 
-        return None, 200
+        return {"success": "true"}, 200
     
 class Search(Resource):
     def __init__(self, embedder):
