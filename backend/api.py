@@ -51,6 +51,26 @@ class Search(Resource):
         with open("data/chunks.pkl", "rb") as f:
             splits = pickle.load(f)
         
-        print("s", splits, type(splits), embeddings, type(embeddings))
         results = self.embedder.similarity(query, embeddings)
         return [[splits[i][0], splits[i][1]] for i in results], 200
+
+
+class Answerapi(Resource):
+    def __init__(self, answer, embedder):
+        self.answer = answer
+        self.embedder = embedder
+        
+    def post(self):
+        query = request.json.get("query")
+
+        with open("data/embeddings.pkl", "rb") as f:
+            embeddings = pickle.load(f)
+        with open("data/chunks.pkl", "rb") as f:
+            splits = pickle.load(f)
+        
+        results = self.embedder.similarity(query, embeddings)
+        data =  [splits[i][0] for i in results]
+        
+        
+        result = self.answer.give_answer(query, data)
+        return result, 200
